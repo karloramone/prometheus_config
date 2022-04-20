@@ -1,0 +1,64 @@
+groups:
+  - name: my-rules
+    rules:
+      - record: job:node_cpu_seconds:avg_idle
+        expr: avg without (cpu) (rate(node_cpu_seconds_total{mode="idle"}[5m]))
+      - record: job:node_cpu_seconds:avg_not_idle
+        expr: avg without (cpu,mode) (rate(node_cpu_seconds_total{mode!="idle"}[5m]))
+
+  - name: my-rules_new
+    rules:
+      - record: job:node_cpu_seconds:avg_not_idle_new
+        expr: avg without (cpu,mode) (rate(node_cpu_seconds_total{mode!="idle"}[5m]))
+
+  - name: Alert
+    rules:
+      - alert: NodeExporterDown
+        expr: up{job="node_exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          # If you want to add custom message for alert use Annotations
+        annotations:
+          summary: 'Node exporter is down' 
+          description: 'Node exporter of instance {{ $labels.instance }} of job {{ $labels.job }} is {{ $value }}'
+          app_link: 'http://rhel8:9100/metrics'
+
+      - alert: alermanagerDown
+        expr: up{job="alertmanager"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'alermanager is down' 
+          description: 'Alertmanager of instance {{ $labels.instance }} of job {{ $labels.job }} is {{ $value }}'
+          app_link: 'http://rhel8:9093/metrics'
+
+      - alert: PrometheusDown
+        expr: up{job="prometheus"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'prometheus is down' 
+          description: 'Prometheus of instance {{ $labels.instance }} of job {{ $labels.job }} is {{ $value }}'
+          app_link: 'http://rhel8:9090/metrics'
+
+
+# Alerting
+# In course this part about Python application latency (request-response time)
+
+      - record: job:prom_query_latency_sec:rate1m
+        expr: rate(prometheus_http_request_duration_seconds_sum{handler="/api/v1/query"}[1m]) / rate(prometheus_http_request_duration_seconds_count{handler="/api/v1/query"}[1m])
+
+      - alert: PromQueryLatencyAbove1secBellow2sec
+        expr: 1 < job:prom_query_latency_sec:rate1m < 2
+        for: 30s
+        labels:
+          severity: warning
+      
+      - alert: PromQueryLatencyAbove2s
+        expr: job:prom_query_latency_sec:rate1m >= 2
+        for: 30s
+        labels:
+          severity: critical

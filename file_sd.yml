@@ -1,0 +1,5 @@
+- targets:
+  - 34.89.211.184:9100
+  labels:
+    env: "prod"
+    sap_server: "application"
