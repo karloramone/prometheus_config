@@ -57,7 +57,10 @@ scrape_configs:
     static_configs:
       - targets: ["34.89.211.184:9115"]
   
-  
+  - job_name: "grafana"
+    static_configs:
+      - targets: ["34.89.211.184:3000"]
+
   - job_name: "prometheus_website"
     static_configs:
       - targets:
@@ -82,3 +85,9 @@ scrape_configs:
     honor_labels: true
     static_configs:
       - targets: ["34.89.211.184:9091"]
+
+
+
+# API HTTP ENDPOINTS FOR QUERY:
+# https://34.89.211.184:9090/api/v1/query?query=up this is api enpoint for quering up
+# https://34.89.211.184:9090/api/v1/targets
